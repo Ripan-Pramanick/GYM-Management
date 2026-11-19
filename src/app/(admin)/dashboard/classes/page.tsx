@@ -328,7 +328,7 @@ export default function ClassesPage() {
           <div className="space-y-4">
             <div className="p-4 bg-[#09090b]/40 border-b border-white/5 flex flex-col sm:flex-row gap-3 items-stretch sm:items-center">
               <div className="flex-1">
-                <Select onValueChange={setSelectedMemberId} value={selectedMemberId}>
+               <Select onValueChange={(val) => setSelectedMemberId(val || "")} value={selectedMemberId}>
                   <SelectTrigger className="bg-[#09090b] border-white/10 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Select active member..." />
                   </SelectTrigger>
@@ -343,7 +343,7 @@ export default function ClassesPage() {
               </div>
 
               <div className="flex-1">
-                <Select onValueChange={setSelectedClassId} value={selectedClassId}>
+               <Select onValueChange={(val) => setSelectedClassId(val || "general")} value={selectedClassId}>
                   <SelectTrigger className="bg-[#09090b] border-white/10 text-white h-11 rounded-xl">
                     <SelectValue placeholder="Select session..." />
                   </SelectTrigger>

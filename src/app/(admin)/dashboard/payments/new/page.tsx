@@ -197,7 +197,7 @@ export default function RecordPaymentPage() {
                   <FormItem>
                     <FormLabel className="text-brand-gray">Select Member</FormLabel>
                     <Select
-                      onValueChange={(val) => handleMemberChange(val, field.onChange)}
+                      onValueChange={(val) => handleMemberChange(val || "", field.onChange)}
                       value={field.value}
                     >
                       <FormControl>
