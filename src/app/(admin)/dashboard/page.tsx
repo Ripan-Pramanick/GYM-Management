@@ -1,58 +1,79 @@
-export const instant = false;
+"use client";
 
-import { Users, CreditCard, TrendingUp, Activity } from "lucide-react";
-import { createClient } from "@/lib/supabase/server";
-import { connection } from "next/server";
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
+import { Users, CreditCard, TrendingUp, Activity, Calendar, Receipt } from "lucide-react";
+import { createBrowserClient } from "@supabase/ssr";
 
-export default async function DashboardOverview() {
-  await connection();
-  const supabase = await createClient();
+export default function DashboardOverview() {
+  const [totalRevenue, setTotalRevenue] = useState(0);
+  const [activeMembers, setActiveMembers] = useState(0);
+  const [totalDues, setTotalDues] = useState(0);
+  const [todayAttendance, setTodayAttendance] = useState(0);
+  const [recentRegistrations, setRecentRegistrations] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const { data: payments } = await supabase.from('payments').select('amount');
-  const totalRevenue = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+  const supabase = useMemo(
+    () =>
+      createBrowserClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+      ),
+    []
+  );
 
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      const today = new Date().toISOString().split("T")[0];
 
-  const { count: activeMembers } = await supabase
-    .from('members')
-    .select('*', { count: 'exact', head: true })
-    .eq('status', 'active');
+      const [
+        paymentsRes,
+        activeMembersRes,
+        unpaidInvoicesRes,
+        recentMembersRes,
+        attendanceRes,
+      ] = await Promise.all([
+        supabase.from("payments").select("amount"),
+        supabase.from("members").select("*", { count: "exact", head: true }).eq("status", "active"),
+        supabase.from("invoices").select("amount").in("status", ["pending", "overdue"]),
+        supabase
+          .from("members")
+          .select("id, full_name, plan, status, created_at")
+          .order("created_at", { ascending: false })
+          .limit(5),
+        supabase.from("attendance").select("*", { count: "exact", head: true }).eq("date", today),
+      ]);
 
+      const revenue = paymentsRes.data?.reduce((sum, p) => sum + Number(p.amount || 0), 0) || 0;
+      const dues = unpaidInvoicesRes.data?.reduce((sum, inv) => sum + Number(inv.amount || 0), 0) || 0;
 
-  const { data: unpaidInvoices } = await supabase
-    .from('invoices')
-    .select('amount')
-    .in('status', ['pending', 'overdue']);
-  const totalDues = unpaidInvoices?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
+      setTotalRevenue(revenue);
+      setActiveMembers(activeMembersRes.count || 0);
+      setTotalDues(dues);
+      setTodayAttendance(attendanceRes.count || 0);
+      setRecentRegistrations(recentMembersRes.data || []);
+      setIsLoading(false);
+    };
 
-  // 4. Recent Registrations
-  const { data: recentRegistrations } = await supabase
-    .from('members')
-    .select(`
-      id, joining_date, status,
-      profiles (full_name),
-      member_subscriptions (
-        membership_plans (name)
-      )
-    `)
-    .order('joining_date', { ascending: false })
-    .limit(5);
+    fetchDashboardData();
+  }, [supabase]);
 
-  // 5. Today's Attendance (New Live Fetch)
-  const today = new Date().toISOString().split('T')[0];
-  const { count: todayAttendance } = await supabase
-    .from('attendance')
-    .select('*', { count: 'exact', head: true })
-    .eq('date', today);
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);
 
-  // Formatting helpers
-  const formatCurrency = (amount: number) => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', maximumFractionDigits: 0 }).format(amount);
-  const formatDate = (date: string) => new Date(date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const formatDate = (date?: string) => {
+    if (!date) return "N/A";
+    const parsed = new Date(date);
+    if (isNaN(parsed.getTime())) return "N/A";
+    return parsed.toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  };
 
   const stats = [
-    { label: "Total Revenue", value: formatCurrency(totalRevenue), icon: TrendingUp, color: "text-emerald-500" },
-    { label: "Active Members", value: activeMembers?.toString() || "0", icon: Users, color: "text-brand-red" },
-    { label: "Outstanding Dues", value: formatCurrency(totalDues), icon: CreditCard, color: "text-orange-500" },
-    { label: "Attendance Today", value: todayAttendance?.toString() || "0", icon: Activity, color: "text-blue-500" },
+    { label: "Total Revenue", value: isLoading ? "..." : formatCurrency(totalRevenue), icon: TrendingUp, color: "text-emerald-500" },
+    { label: "Active Members", value: isLoading ? "..." : activeMembers.toString(), icon: Users, color: "text-brand-red" },
+    { label: "Outstanding Dues", value: isLoading ? "..." : formatCurrency(totalDues), icon: CreditCard, color: "text-orange-500" },
+    { label: "Attendance Today", value: isLoading ? "..." : todayAttendance.toString(), icon: Activity, color: "text-blue-500" },
   ];
 
   return (
@@ -62,7 +83,6 @@ export default async function DashboardOverview() {
         <p className="text-brand-gray">Welcome back. Here is what's happening at FITCORE today.</p>
       </div>
 
-      {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat, i) => (
           <div key={i} className="bg-brand-card p-6 rounded-2xl border border-white/5 shadow-lg transition-all hover:border-white/10 hover:shadow-xl">
@@ -78,47 +98,77 @@ export default async function DashboardOverview() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Recent Members Panel */}
         <div className="lg:col-span-2 bg-brand-card border border-white/5 rounded-2xl p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-bold text-white">Recent Registrations</h2>
-            <button className="text-sm text-brand-red hover:text-red-400 font-medium">View All</button>
+            <Link href="/dashboard/members" className="text-sm text-brand-red hover:text-red-400 font-medium">
+              View All
+            </Link>
           </div>
           <div className="space-y-4">
-            {recentRegistrations?.map((member: any) => {
-              const name = Array.isArray(member.profiles) ? member.profiles[0]?.full_name : member.profiles?.full_name;
-              const sub = Array.isArray(member.member_subscriptions) ? member.member_subscriptions[0] : member.member_subscriptions;
-              const planName = sub?.membership_plans?.name || "No Plan";
-              
-              return (
-                <div key={member.id} className="flex items-center justify-between p-4 rounded-xl bg-[#09090b] border border-white/5 hover:bg-white/5 transition-colors">
-                  <div className="flex flex-col">
-                    <span className="text-white font-medium">{name}</span>
-                    <span className="text-brand-gray text-xs">{planName} Plan • {formatDate(member.joining_date)}</span>
+            {isLoading ? (
+              <div className="py-8 text-center text-brand-gray">Loading recent registrations...</div>
+            ) : recentRegistrations.length > 0 ? (
+              recentRegistrations.map((member: any) => {
+                const planName = member.plan ? member.plan.replace("-", " ") : "No";
+
+                return (
+                  <div key={member.id} className="flex items-center justify-between p-4 rounded-xl bg-[#09090b] border border-white/5 hover:bg-white/5 transition-colors">
+                    <div className="flex flex-col">
+                      <span className="text-white font-medium">{member.full_name || "Unknown"}</span>
+                      <span className="text-brand-gray text-xs capitalize">
+                        {planName} Plan • {formatDate(member.created_at)}
+                      </span>
+                    </div>
+                    <span
+                      className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
+                        member.status?.toLowerCase() === "active"
+                          ? "bg-emerald-500/10 text-emerald-500"
+                          : "bg-orange-500/10 text-orange-500"
+                      }`}
+                    >
+                      {member.status || "active"}
+                    </span>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-semibold uppercase tracking-wider ${
-                    member.status === 'active' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-orange-500/10 text-orange-500'
-                  }`}>
-                    {member.status}
-                  </span>
-                </div>
-              )
-            })}
+                );
+              })
+            ) : (
+              <div className="py-8 text-center text-brand-gray">No recent registrations found.</div>
+            )}
           </div>
         </div>
 
-        {/* Quick Actions Panel */}
         <div className="bg-brand-card border border-white/5 rounded-2xl p-6">
           <h2 className="text-lg font-bold text-white mb-6">Quick Actions</h2>
           <div className="space-y-3">
-            <button className="w-full flex items-center justify-between p-4 rounded-xl bg-[#09090b] border border-white/5 hover:border-brand-red transition-colors group">
+            <Link
+              href="/dashboard/members/new"
+              className="w-full flex items-center justify-between p-4 rounded-xl bg-[#09090b] border border-white/5 hover:border-brand-red transition-colors group"
+            >
               <span className="text-white font-medium group-hover:text-brand-red transition-colors">Add New Member</span>
               <Users className="h-5 w-5 text-brand-gray group-hover:text-brand-red" />
-            </button>
-            <button className="w-full flex items-center justify-between p-4 rounded-xl bg-[#09090b] border border-white/5 hover:border-brand-red transition-colors group">
+            </Link>
+            <Link
+              href="/dashboard/payments/new"
+              className="w-full flex items-center justify-between p-4 rounded-xl bg-[#09090b] border border-white/5 hover:border-brand-red transition-colors group"
+            >
               <span className="text-white font-medium group-hover:text-brand-red transition-colors">Record Payment</span>
               <CreditCard className="h-5 w-5 text-brand-gray group-hover:text-brand-red" />
-            </button>
+            </Link>
+            <Link
+              href="/dashboard/classes/new"
+              className="w-full flex items-center justify-between p-4 rounded-xl bg-[#09090b] border border-white/5 hover:border-brand-red transition-colors group"
+            >
+              <span className="text-white font-medium group-hover:text-brand-red transition-colors">Schedule Class</span>
+              <Calendar className="h-5 w-5 text-brand-gray group-hover:text-brand-red" />
+            </Link>
+            <Link
+              href="/dashboard/expenses/new"
+              className="w-full flex items-center justify-between p-4 rounded-xl bg-[#09090b] border border-white/5 hover:border-brand-red transition-colors group"
+            >
+              <span className="text-white font-medium group-hover:text-brand-red transition-colors">Record Expense</span>
+              <Receipt className="h-5 w-5 text-brand-gray group-hover:text-brand-red" />
+            </Link>
           </div>
         </div>
       </div>
