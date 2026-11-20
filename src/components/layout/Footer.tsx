@@ -1,9 +1,8 @@
 "use client";
 
-import { useRef, useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { Dumbbell, ArrowUp, CheckCircle2 } from "lucide-react";
-import { useScrollReveal } from "@/components/animations/useScrollReveal";
 import { createBrowserClient } from "@supabase/ssr";
 
 const socialLinks = [
@@ -59,7 +58,6 @@ const quickLinks = [
 ];
 
 export default function Footer() {
-  const containerRef = useRef<HTMLElement>(null);
   const [currentYear, setCurrentYear] = useState(2026);
   const [newsletterEmail, setNewsletterEmail] = useState("");
   const [isSubscribing, setIsSubscribing] = useState(false);
@@ -73,8 +71,6 @@ export default function Footer() {
       ),
     []
   );
-
-  useScrollReveal(containerRef, ".footer-col");
 
   useEffect(() => {
     setCurrentYear(new Date().getFullYear());
@@ -109,10 +105,10 @@ export default function Footer() {
   };
 
   return (
-    <footer ref={containerRef} className="bg-[#050505] pt-20 pb-10 border-t border-white/5">
+    <footer className="bg-[#050505] pt-20 pb-10 border-t border-white/5 relative z-10">
       <div className="container mx-auto px-4 md:px-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-16">
-          <div className="footer-col space-y-6">
+          <div className="space-y-6">
             <Link href="/" className="flex items-center gap-2">
               <Dumbbell className="text-brand-red h-8 w-8" />
               <span className="text-2xl font-extrabold tracking-widest text-white">
@@ -138,7 +134,7 @@ export default function Footer() {
             </div>
           </div>
 
-          <div className="footer-col">
+          <div>
             <h4 className="text-white font-bold mb-6">Quick Links</h4>
             <ul className="space-y-3.5">
               {quickLinks.map((link) => (
@@ -155,7 +151,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="footer-col">
+          <div>
             <h4 className="text-white font-bold mb-6">Contact Us</h4>
             <ul className="space-y-4 text-sm text-brand-gray">
               <li>
@@ -176,7 +172,7 @@ export default function Footer() {
             </ul>
           </div>
 
-          <div className="footer-col">
+          <div>
             <h4 className="text-white font-bold mb-6">Newsletter</h4>
             <p className="text-brand-gray text-sm mb-4">Subscribe for fitness tips and special offers.</p>
             {isSubscribed ? (
@@ -207,7 +203,7 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="footer-col flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/5 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-center pt-8 border-t border-white/5 gap-4">
           <p className="text-brand-gray text-xs">© {currentYear} FITCORE. All rights reserved.</p>
           <button
             type="button"
