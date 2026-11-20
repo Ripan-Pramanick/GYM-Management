@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useScrollReveal } from "@/components/animations/useScrollReveal";
-import Image from "next/image"; // Added next/image
+import Image from "next/image";
 
 const classes = [
   { name: "Yoga", desc: "Mind & Flexibility", img: "/images/yoga.jpg" },
@@ -31,23 +31,33 @@ export default function Classes() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {classes.map((cls, i) => (
-            <div key={i} className="cls-anim group relative rounded-xl overflow-hidden h-72 cursor-pointer">
-              {/* Replaced img with Next.js Image */}
-              <Image 
-                src={cls.img} 
-                alt={cls.name} 
+            <Link
+              key={i}
+              href="/classes"
+              className="cls-anim group relative rounded-xl overflow-hidden h-72 block border border-white/5 hover:border-brand-red/40 transition-colors"
+            >
+              <Image
+                src={cls.img}
+                alt={cls.name}
                 fill
-                className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-70" 
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 20vw"
+                className="object-cover transition-transform duration-700 group-hover:scale-110 opacity-70"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+              <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent" />
               <div className="absolute bottom-6 left-6 right-6 transform transition-transform duration-300 group-hover:-translate-y-2">
                 <h3 className="text-white font-bold text-lg mb-1">{cls.name}</h3>
                 <p className="text-brand-gray text-xs">{cls.desc}</p>
               </div>
-            </div>
+            </Link>
           ))}
+        </div>
+
+        <div className="mt-8 md:hidden text-center">
+          <Link href="/classes" className="inline-flex text-white hover:text-brand-red items-center text-sm font-semibold transition-colors">
+            View All Classes <ChevronRight className="ml-1 h-4 w-4" />
+          </Link>
         </div>
       </div>
     </section>

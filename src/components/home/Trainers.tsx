@@ -4,7 +4,7 @@ import { useRef } from "react";
 import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 import { useScrollReveal } from "@/components/animations/useScrollReveal";
-import Image from "next/image"; // Added next/image
+import Image from "next/image";
 
 const trainers = [
   { name: "Arjun Mehta", spec: "Strength & Conditioning", img: "/images/arjun-mehta.jpg" },
@@ -30,24 +30,34 @@ export default function Trainers() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {trainers.map((trainer, i) => (
-            <div key={i} className="trn-anim bg-brand-card rounded-xl overflow-hidden border border-white/5 group transition-colors hover:border-brand-red/30">
-              {/* Added relative position here to contain the Next.js fill image */}
+            <Link
+              key={i}
+              href="/trainers"
+              className="trn-anim bg-brand-card rounded-xl overflow-hidden border border-white/5 group transition-colors hover:border-brand-red/30 block"
+            >
               <div className="h-64 overflow-hidden relative">
-                <Image 
-                  src={trainer.img} 
-                  alt={trainer.name} 
+                <Image
+                  src={trainer.img}
+                  alt={trainer.name}
                   fill
-                  className="object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0" 
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                  className="object-cover transition-transform duration-700 group-hover:scale-110 grayscale group-hover:grayscale-0"
                 />
               </div>
               <div className="p-6 text-center">
                 <h3 className="text-white font-bold text-lg mb-1">{trainer.name}</h3>
                 <p className="text-brand-red text-sm">{trainer.spec}</p>
               </div>
-            </div>
+            </Link>
           ))}
+        </div>
+
+        <div className="mt-8 md:hidden text-center">
+          <Link href="/trainers" className="inline-flex text-white hover:text-brand-red items-center text-sm font-semibold transition-colors">
+            View All Trainers <ChevronRight className="ml-1 h-4 w-4" />
+          </Link>
         </div>
       </div>
     </section>
