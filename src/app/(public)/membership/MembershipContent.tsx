@@ -58,7 +58,7 @@ export default function MembershipContent() {
       <PageHeader
         title="Membership Plans"
         subtitle="Choose the right commitment for your fitness journey."
-        bgImage="/images/hero-bg.jpg"
+        bgImage="/images/hero-bg.webp"
       />
 
       <section ref={containerRef} className="py-24 bg-[#050505] flex-1">
