@@ -3,9 +3,28 @@
 import { useRef, useEffect, useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Play, ChevronRight, User, X } from "lucide-react";
+import { Play, ChevronRight, X } from "lucide-react";
 import gsap from "gsap";
 import { useGSAP } from "@gsap/react";
+
+const memberAvatars = [
+  {
+    src: "https://randomuser.me/api/portraits/men/32.jpg",
+    alt: "FITCORE Member 1",
+  },
+  {
+    src: "https://randomuser.me/api/portraits/women/44.jpg",
+    alt: "FITCORE Member 2",
+  },
+  {
+    src: "https://randomuser.me/api/portraits/men/75.jpg",
+    alt: "FITCORE Member 3",
+  },
+  {
+    src: "https://randomuser.me/api/portraits/women/68.jpg",
+    alt: "FITCORE Member 4",
+  },
+];
 
 export default function Hero() {
   const containerRef = useRef<HTMLElement>(null);
@@ -190,13 +209,19 @@ export default function Hero() {
           </div>
 
           <div className="flex items-center gap-4 pt-8">
-            <div className="flex -space-x-4">
-              {[1, 2, 3, 4].map((i) => (
+            <div className="flex -space-x-3">
+              {memberAvatars.map((avatar, i) => (
                 <div
                   key={i}
-                  className="hero-avatar w-10 h-10 rounded-full border-2 border-brand-dark bg-brand-red/10 backdrop-blur-sm flex items-center justify-center shadow-lg relative z-10"
+                  className="hero-avatar w-10 h-10 rounded-full border-2 border-brand-dark bg-zinc-800 overflow-hidden shadow-lg relative z-10"
                 >
-                  <User className="w-5 h-5 text-white/70" />
+                  <img
+                    src={avatar.src}
+                    alt={avatar.alt}
+                    className="w-full h-full object-cover"
+                    loading="lazy"
+                    decoding="async"
+                  />
                 </div>
               ))}
             </div>
