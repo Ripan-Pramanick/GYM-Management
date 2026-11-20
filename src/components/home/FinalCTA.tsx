@@ -47,7 +47,7 @@ export default function FinalCTA() {
     <section ref={containerRef} className="py-24 md:py-32 relative overflow-hidden bg-[#09090b]">
       <div ref={bgRef} className="absolute inset-0 origin-center">
         <Image
-          src="/images/hero-bg.jpg"
+          src="/images/hero-bg.webp"
           alt="CTA Background"
           fill
           sizes="100vw"
